@@ -1,0 +1,83 @@
+// Block definition (there may be more than one block per file)
+// This is the input file for fuzzy inference system.. FCL (Fuzzy/Function Control Language)
+FUNCTION_BLOCK fw2
+
+// Define input variables
+VAR_INPUT
+    g : REAL;
+    qos : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT
+    fgoodness : REAL;
+END_VAR
+
+// Fuzzify input variable 'g'
+FUZZIFY g
+    TERM poor := (1,0) (1,1) (3,0);
+    TERM medium := (1,0) (3,1) (4,1) (6,1);
+    TERM good := (4,0) (6,1) (7,1) (9,0);
+    TERM excellent := (7,0) (9,1) (10,1);
+END_FUZZIFY
+
+// Fuzzify input variable 'qos'
+//TERM be := (0, 1) (2, 1) (2,0);
+//    TERM nrtps := (2,0) (2,1) (4,1) (4,0);
+//    TERM ertps := (4,0) (4,1) (6,1) (6,0);
+//    TERM rtps := (6,0) (6,1) (8,1) (8,0);
+//    TERM ugs := (8,0) (8,1) (10,1) (10,0);
+FUZZIFY qos
+    TERM be := (0, 1) (0.25, 1) (2.25,0);
+    TERM nrtps := (0.25,0) (2.25,1) (2.75,1) (4.75,0);
+    TERM ertps := (2.75,0) (4.75,1) (5.25,1) (7.25,0);
+    TERM rtps := (5.25,0) (7.25,1) (7.75,1) (9.75,0);
+    TERM ugs := (7.75,0) (9.75,1) (10,1) (10,0);
+END_FUZZIFY
+
+// Defzzzify output variable 'fgoodness'
+DEFUZZIFY fgoodness
+    TERM poor := (1,0) (1,1) (3,0);
+    TERM medium := (1,0) (3,1) (4,1) (6,1);
+    TERM good := (4,0) (6,1) (7,1) (9,0);
+    TERM excellent := (7,0) (9,1) (10,1);
+    // Use 'Center Of Gravity' defuzzification method
+    METHOD : COG;
+    // Default value is 0 (if no rule activates defuzzifier)
+    DEFAULT := 0;
+END_DEFUZZIFY
+
+RULEBLOCK No1
+    // Use 'min' for 'and' (also implicit use 'max'
+    // for 'or' to fulfill DeMorgan's Law)
+    AND : MIN;
+    // Use 'min' activation method
+    ACT : MIN;
+    // Use 'max' accumulation method
+    ACCU : MAX;
+
+    RULE 1 : IF g IS excellent AND qos IS ugs THEN fgoodness IS excellent;
+    RULE 2 : IF g IS excellent AND qos IS rtps THEN fgoodness IS excellent;
+    RULE 3 : IF g IS excellent AND qos IS ertps THEN fgoodness IS excellent;
+    RULE 4 : IF g IS excellent AND qos IS nrtps THEN fgoodness IS good;
+    RULE 5 : IF g IS excellent AND qos IS be THEN fgoodness IS medium;
+    RULE 6 : IF g IS good AND qos IS ugs THEN fgoodness IS excellent;
+    RULE 7 : IF g IS good AND qos IS rtps THEN fgoodness IS excellent;
+    RULE 8 : IF g IS good AND qos IS ertps THEN fgoodness IS good;
+    RULE 9 : IF g IS good AND qos IS nrtps THEN fgoodness IS medium;
+    RULE 10 : IF g IS good AND qos IS be THEN fgoodness IS medium;
+    RULE 11 : IF g IS medium AND qos IS ugs THEN fgoodness IS excellent;
+    RULE 12 : IF g IS medium AND qos IS rtps THEN fgoodness IS good;
+    RULE 13 : IF g IS medium AND qos IS ertps THEN fgoodness IS medium;
+    RULE 14 : IF g IS medium AND qos IS nrtps THEN fgoodness IS medium;
+    RULE 15 : IF g IS medium AND qos IS be THEN fgoodness IS poor;
+    RULE 16 : IF g IS poor AND qos IS ugs THEN fgoodness IS good;
+    RULE 17 : IF g IS poor AND qos IS rtps THEN fgoodness IS good;
+    RULE 18 : IF g IS poor AND qos IS nrtps THEN fgoodness IS medium;
+    RULE 19 : IF g IS poor AND qos IS be THEN fgoodness IS poor;
+    RULE 20 : IF g IS poor AND qos IS ertps THEN fgoodness IS medium;
+
+
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
